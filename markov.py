@@ -1,4 +1,7 @@
 from random import choice
+from sys import argv
+
+N_GRAM = 4
 
 
 def open_and_read_file(file_path):
@@ -25,19 +28,21 @@ def make_chains(text_string):
         {('hi', 'there'): ['mary', 'juanita'], ('there', 'mary'): ['hi'], ('mary', 'hi': ['there']}
     """
     chains = { }
-    # split on white space to get words
+    # Split on white space to get words
     words = text_string.split()
 
-    for i in range(len(words) - 2):
-        word1 = words[i]
-        word2 = words[i + 1] 
-        element = words[i + 2]
+    for i in range(len(words) - N_GRAM):
+        # Create tuple to hold n words
+        words_ngram = tuple(words[i : i + N_GRAM ])
+        # Get the last element
+        element = words[i + N_GRAM]
         # If the tuple key exists, append the element to the value list 
-        if (word1, word2) in chains:
-            chains[(word1, word2)].append(element)
+        if words_ngram in chains:
+            chains[words_ngram].append(element)
         # The tuple key doesn't exist, so create it and add the element in the value list
         else:
-            chains[(word1, word2)] = [element]
+            chains[words_ngram] = [element]
+
     return chains
 
 
@@ -45,29 +50,29 @@ def make_text(chains):
     """Takes dictionary of markov chains; returns random text."""
     text = ''
 
-    # Get the beginning pair
-    word1, word2 = choice(chains.keys())
-    text = word1 + " " + word2 + " "
-    # tuple is a key in chains dict
+    # Get the beginning tuple
+    words_ngram = choice(chains.keys())
+    text = " ".join(words_ngram)
+    # Tuple is a key in chains dict
     while len(text) < 55000:
-        # Get a random list from the given pair
-        word_list = chains.get((word1, word2))
+        # Get a random list from the given tuple
+        word_list = chains.get(words_ngram)
+
         # Check for an empty list
         if word_list is None:
-            return text
+            break
 
-        word3 = choice(word_list)
+        word_n = choice(word_list)
 
-        # # Make all the things strings
-        # temp_string = str(word1) + " " + str(word2) + " " + str(word3)
-        # text = text + temp_string
-        text += word3 + " "
-        word1 = word2
-        word2 = word3
+        # Make all the things strings
+        text = text + " " + word_n
+
+        # Shift over the words to get the next key
+        words_ngram = words_ngram[1:] + (word_n,)
 
     return text
 
-input_path = "dracula.txt"
+input_path = argv[1]
 
 # Open the file and turn it into one long string
 input_text = open_and_read_file(input_path)
@@ -80,4 +85,3 @@ chains = make_chains(input_text)
 random_text = make_text(chains)
 
 print random_text
-print len(random_text)
