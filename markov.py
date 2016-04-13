@@ -1,18 +1,26 @@
+
+
 from random import choice
 from sys import argv
 
-N_GRAM = 4
+N_GRAM = int(argv[1])
 
 
-def open_and_read_file(file_path):
+def open_and_read_files(*paths):
     """Takes file path as string; returns text as string.
 
     Takes a string that is a file path, opens the file, and turns
     the file's contents as one string of text.
     """
-
-    with open(file_path, 'r') as f:
-        return f.read()
+    text = ''
+    temp = ''
+    for path_list in paths:
+        for path in path_list:
+            temp = open(str(path), 'r')
+            text += temp.read()
+    return text
+    # with open(file_path, 'r') as f:
+    #     return f.read()
 
 
 def make_chains(text_string):
@@ -49,12 +57,24 @@ def make_chains(text_string):
 def make_text(chains):
     """Takes dictionary of markov chains; returns random text."""
     text = ''
+    return_text = ''
+    last_punctuation_index = 0
+    sentence_enders = [".","!","?"]
 
-    # Get the beginning tuple
-    words_ngram = choice(chains.keys())
-    text = " ".join(words_ngram)
+
+    not_legit_caps = True
+
+    while not_legit_caps:
+        # Get the beginning tuple
+        words_ngram = choice(chains.keys())
+        # Start with a capitalized word
+        if words_ngram[0][0].isupper():
+            not_legit_caps = False
+            text = " ".join(words_ngram)
+
+
     # Tuple is a key in chains dict
-    while len(text) < 55000:
+    while len(text) < 140:
         # Get a random list from the given tuple
         word_list = chains.get(words_ngram)
 
@@ -64,18 +84,26 @@ def make_text(chains):
 
         word_n = choice(word_list)
 
-        # Make all the things strings
+        # Add strings to text
         text = text + " " + word_n
+
+        # Set the punctuation flag for slicing
+        if word_n[-1] in sentence_enders:
+            last_punctuation_index = len(text) - 1 
 
         # Shift over the words to get the next key
         words_ngram = words_ngram[1:] + (word_n,)
 
-    return text
+    # Set and test our return text 
+    return_text = text[:last_punctuation_index + 1]
 
-input_path = argv[1]
+    if return_text is '':
+        make_text(chains)
+    else:
+        return return_text
 
-# Open the file and turn it into one long string
-input_text = open_and_read_file(input_path)
+# Open the files and turn them into one long string
+input_text = open_and_read_files(argv[2:])
 
 # Get a Markov chain
 chains = make_chains(input_text)
